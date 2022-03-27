@@ -1,0 +1,480 @@
+<!DOCTYPE html>
+
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <title>🤖 Aval-Bot 🤖</title>
+    <script src="https://cdn.ethers.io/lib/ethers-5.2.umd.min.js" type="application/javascript"></script>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet"
+        integrity="sha384-1BmE4kWBq78iYhFldvKuhfTAU6auU8tT94WrHftjDbrCEXSU1oBoqyl2QvZ6jIW3" crossorigin="anonymous">
+</head>
+
+<body>
+
+    <div class="container">
+        <div class="row">
+            <div class="col">
+                <h1>Hello, Aval-Bot!</h1>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col">
+                <button id="btn_connect_metamask" type="button m-1" class="btn btn-primary m-1"> 🦊Connect
+                    metamask</button>
+                <button id="btn_get_book" type="button m-1" class="btn btn-primary m-1" disabled> 📖 Get
+                    book</button>
+                <button id="btn_create_orders" type="button m-1" class="btn btn-primary m-1" disabled> 🔔 Create
+                    orders</button>
+                <button id="btn_cancel_orders" type="button m-1" class="btn btn-warning m-1" disabled> 🔕 Cancel
+                    orders</button>
+                <button id="btn_cancel_all_orders" type="button m-1" class="btn btn-warning m-1" disabled> 🔕❗️ Cancel all
+                    orders</button>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col m-1">
+                <button id="btn_run_bot" type="button m-1" class="btn btn-success" disabled>🤖Run bot</button>
+                <button id="btn_kill_bot" type="button m-1" class="btn btn-danger" disabled> 🪦 Kill
+                    bot</button>
+            </div>
+        </div>
+        <div class="row m-1 mt-3">
+            <div class="col">
+                <span><b>Book info</b></span>
+            </div>
+        </div>
+        <div class="row m-1">
+            <div class="col">
+                <label for="input_lowest_sell">Lowest sell:</label>
+            </div>
+            <div class="col">
+                <div class="input-group">
+                    <input id="input_lowest_sell" class="form-control" type="text" autocomplete=off
+                        onchange="recalculateSpread()">
+                    <div class="input-group-append">
+                        <span class="input-group-text">AVAX</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="row m-1">
+            <div class="col">
+                <label for="input_highest_buy">Highest buy:</label>
+            </div>
+            <div class="col">
+                <div class="input-group">
+                    <input id="input_highest_buy" class="form-control" type="text" autocomplete=off
+                        onchange="recalculateSpread()">
+                    <div class="input-group-append">
+                        <span class="input-group-text">AVAX</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="row m-1">
+            <div class="col">
+                <label for="input_spread">Spread:</label>
+            </div>
+            <div class="col">
+                <div class="input-group">
+                    <input id="input_spread" class="form-control" type="text" disabled autocomplete=off>
+                    <div class="input-group-append">
+                        <span class="input-group-text">AVAX</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="row m-1 mt-3">
+            <div class="col">
+                <span><b>New order</b></span>
+            </div>
+        </div>
+        <div class="row m-1">
+            <div class="col">
+                <label for="price_undercut">Undercut price by:</label>
+            </div>
+            <div class="col">
+                <div class="input-group">
+                    <input id="price_undercut" class="form-control" type="text" value="0.5" autocomplete=off>
+                    <div class="input-group-append">
+                        <span class="input-group-text">AVAX</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="row m-1">
+            <div class="col">
+                <label for="order_amount">New order size:</label>
+            </div>
+            <div class="col">
+                <div class="input-group">
+                    <input id="order_amount" class="form-control" type="text" value="1" autocomplete=off>
+                    <div class="input-group-append">
+                        <span class="input-group-text">TEAM8</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="row mt-5 ">
+            <div class="col-12">
+                <b>Log:</b>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-12">
+                <textarea class="form-control" id="output_log" autocomplete=off disabled rows="70">
+                </textarea>
+            </div>
+        </div>
+    </div>
+    <script>
+
+        let input_lowest_sell = document.getElementById("input_lowest_sell");
+        let input_highest_buy = document.getElementById("input_highest_buy");
+        let input_spread = document.getElementById("input_spread");
+        let price_undercut = document.getElementById("price_undercut");
+        let order_amount = document.getElementById("order_amount");
+        let output_log = document.getElementById("output_log");
+
+
+        var accounts;
+        var dx_pairs_data;
+        var dx_exchange;
+        var dx_portfolio;
+        var dx_tradepairs;
+        var dx_orderbooks;
+        var signer;
+        var order_book;
+        var price_base = 18; //baseDisplayDecimals
+        var quantity_base = 18; //quoteDisplayDecimals
+
+        // buttons 
+        let btn_connect_metamask = document.getElementById("btn_connect_metamask");
+        btn_connect_metamask.addEventListener('click', event => {
+            connectMetamask();
+        });
+
+        let btn_get_book = document.getElementById("btn_get_book");
+        btn_get_book.addEventListener('click', event => {
+            loadOrderBookData();
+        });
+
+        let btn_create_orders = document.getElementById("btn_create_orders");
+        btn_create_orders.addEventListener('click', event => {
+            createOrders(
+                parseFloat(input_lowest_sell.value) - parseFloat(price_undercut.value),
+                parseFloat(input_highest_buy.value) + parseFloat(price_undercut.value)
+            );
+        });
+
+        let btn_cancel_orders = document.getElementById("btn_cancel_orders");
+        btn_cancel_orders.addEventListener('click', event => {
+            cancelOrders();
+        });
+
+        let btn_cancel_all_orders = document.getElementById("btn_cancel_all_orders");
+        btn_cancel_all_orders.addEventListener('click', event => {
+            cancelAllOrders();
+        });
+
+        let btn_run_bot = document.getElementById("btn_run_bot");
+        btn_run_bot.addEventListener('click', event => {
+            runBot();
+        });
+
+        let btn_kill_bot = document.getElementById("btn_kill_bot");
+        btn_kill_bot.addEventListener('click', event => {
+            killBot();
+        });
+
+        const connectMetamask = async function () {
+            if (window.ethereum) {
+                try {
+                    accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
+                    console.log(accounts);
+                    signer = (new ethers.providers.Web3Provider(window.ethereum)).getSigner();
+                    btn_connect_metamask.setAttribute("disabled", true);
+                    btn_get_book.removeAttribute("disabled");
+                    btn_create_orders.removeAttribute("disabled");
+                    btn_cancel_orders.removeAttribute("disabled");
+                    btn_cancel_all_orders.removeAttribute("disabled");
+                    btn_run_bot.removeAttribute("disabled");
+                    btn_connect_metamask.textContent = "🦊Wallet connected";
+                    output_log.value = `${new Date().toLocaleTimeString()}: 🦊Wallet connected\n` + output_log.value;
+                    getDeployment("0x4344Ef6FD7cefbCe61083f0eD61F6176877b2622", "Exchange");
+                    getDeployment("0x17ca9Cc9E812D35DD8CBbE03ef526B8BBfab4380", "Portfolio");
+                    getDeployment("0x8664EFa775aBf51aD5b2a179E088efF5AF477c73", "TradePairs");
+                    getDeployment("0x1805bFdEf9df67F6943A640603D705E4768A97D1", "OrderBooks");
+                } catch (error) {
+                    if (error.code === 4001) {
+                        console.log("User rejected");
+                    }
+                    console.log("Error");
+                }
+            }
+        }
+
+        /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
+        // REST API methods
+        /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
+        const getPairs = function () {
+            fetch("https://api.dexalot-dev.com/api/trading/pairs").then(function (response) {
+                return response.json();
+            }).then(function (data) {
+                console.log("Trading pairs:");
+                console.log(data);
+                output_log.value = `${new Date().toLocaleTimeString()}: Trading pairs loaded\n` + output_log.value;
+                for (const trade_pair of data) {
+                    if (trade_pair["pair"] == "TEAM8/AVAX") {
+                        dx_pairs_data = trade_pair;
+                        break;
+                    }
+                }
+            }).catch(function () {
+                console.log("getPairs failed");
+            });
+        }
+
+        const getDeployment = function (address, deploymentType) {
+            fetch(`https://api.dexalot-dev.com/api/trading/deploymentabi/${deploymentType}`).then(function (response) {
+                return response.json();
+            }).then(function (data) {
+                console.log(deploymentType + " ABI:");
+                console.log(data);
+
+                for (const func of data.abi.abi) {
+                    console.log(`${func["type"]} - ${func["name"]}`);
+                }
+
+                contract = new ethers.Contract(address, data.abi.abi, signer)
+
+                if (deploymentType == "Exchange") {
+                    dx_exchange = contract
+                    output_log.value = `${new Date().toLocaleTimeString()}: Exchange ABI loaded\n` + output_log.value;
+                }
+                else if (deploymentType == "Portfolio") {
+                    dx_portfolio = contract
+                    output_log.value = `${new Date().toLocaleTimeString()}: Portfolio ABI loaded\n` + output_log.value;
+                }
+                else if (deploymentType == "TradePairs") {
+                    dx_tradepairs = contract
+                    output_log.value = `${new Date().toLocaleTimeString()}: TradePairs ABI loaded\n` + output_log.value;
+                }
+                else if (deploymentType == "OrderBooks") {
+                    dx_orderbooks = contract
+                    output_log.value = `${new Date().toLocaleTimeString()}: OrderBooks ABI loaded\n` + output_log.value;
+                }
+            }).catch(function () {
+                console.log(`getDeployment "${deploymentType}" failed`);
+            });
+        }
+
+        const getOpenOrders = async function (traderaddress, pair) {
+            //traderaddress: 0x8dac28a6cd982b66a8c17264edf9f825e1e19288
+            //pair: LFG/SER
+            var response = await fetch(`https://api.dexalot-dev.com/api/trading/openorders/params?traderaddress=${traderaddress}&pair=${pair}`);
+            return response.json();
+        }
+
+        /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
+        // Contract interaction
+        /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
+
+        // notes:
+        // dx_tradepairs.estimateGas
+
+        const getBookfromChain = async function () {
+            var borders = await dx_tradepairs.getNBuyBook(
+                ethers.utils.formatBytes32String(dx_pairs_data["pair"]),
+                2,
+                50,
+                0,
+                ethers.utils.formatBytes32String("")
+            );
+            var sorders = await dx_tradepairs.getNSellBook(
+                ethers.utils.formatBytes32String(dx_pairs_data["pair"]),
+                2,
+                50,
+                0,
+                ethers.utils.formatBytes32String("")
+            );
+            var buyOrderArray = [];
+            var sellOrderArray = [];
+
+            sellOrderArray.push(sorders[0].toString().split(","), sorders[1].toString().split(","));
+            buyOrderArray.push(borders[0].toString().split(","), borders[1].toString().split(","));
+
+            order_book = { buyBook: buyOrderArray, sellBook: sellOrderArray };
+            console.log(order_book);
+            return order_book;
+        }
+
+
+        const createTransaction = async function (price, quantity, side) {
+            // ethers.utils.parseUnits(ethers.FixedNumber.fromValue("15000000000000000000",18).toString(), 1)
+
+            const tx = await dx_tradepairs.addOrder(
+                ethers.utils.formatBytes32String(dx_pairs_data["pair"]),
+                ethers.utils.parseUnits(price.toString(), 18),  // 18/1
+                ethers.utils.parseUnits(quantity.toString(), 18),    // 18/4
+                ((side == "BUY") ? 0 : 1), // "BUY": 0, "SELL": 1
+                1, // "1": "LIMIT"
+            );
+            output_log.value = `${new Date().toLocaleTimeString()}: 🔔 ${side} order for ${price} AVAX, ${quantity} TEAM sent\n` + output_log.value;
+        }
+
+
+        const cancelTransaction = async function (order_id) {
+            const tx = await dx_tradepairs.cancelOrder(
+                ethers.utils.formatBytes32String(dx_pairs_data["pair"]),
+                order_id
+            );
+            output_log.value = `${new Date().toLocaleTimeString()}: 🔕 Order cancel sent\n` + output_log.value;
+        }
+
+
+        const cancelAllTransactions = async function (order_ids) {
+            const tx = await dx_tradepairs.cancelAllOrders(
+                ethers.utils.formatBytes32String(dx_pairs_data["pair"]),
+                order_ids
+            );
+            output_log.value = `${new Date().toLocaleTimeString()}: 🔕 Cancel all orders sent\n` + output_log.value;
+        }
+
+        /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
+        // Other functions
+        /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
+        const loadOrderBookData = async function () {
+            var order_book = await getBookfromChain();
+            price_base = dx_pairs_data["base_evmdecimals"];
+            quantity_base = dx_pairs_data["quote_evmdecimals"];
+            low = price_str_to_float(order_book.buyBook[0][0], price_base);
+            high = price_str_to_float(order_book.sellBook[0][0], price_base);
+            input_lowest_sell.value = high;
+            input_highest_buy.value = low;
+            recalculateSpread();
+
+            output_log.value = `${new Date().toLocaleTimeString()}: 📖 Orders loaded: LOW: ${low} | HIGH: ${high} | SPREAD: ${high - low}\n` + output_log.value;
+        }
+
+        const createOrders = async function (high, low) {
+            if (high <= low) {
+                output_log.value = `${new Date().toLocaleTimeString()}: 📖 No orders created, spread is too low. Decrease undercut price or set prices manually.\n` + output_log.value;
+                return;
+            }
+            await createTransaction(high, parseFloat(order_amount.value), "SELL");
+            await createTransaction(low, parseFloat(order_amount.value), "BUY");
+        }
+
+        const cancelOrders = async function () {
+            orders = await getOpenOrders(accounts[0], dx_pairs_data["pair"]);
+            for (const order of orders["rows"]) {
+                await cancelTransaction(order["id"]);
+            }
+        }
+
+        const cancelAllOrders = async function () {
+            orders = await getOpenOrders(accounts[0], dx_pairs_data["pair"]);
+            let orders_ids = [];
+            for (const order of orders["rows"]) {
+                orders_ids.push(order["id"])
+            }
+
+            await cancelAllTransactions(orders_ids);
+        }
+
+        function price_str_to_float(price_str, base) {
+            return price_str * Math.pow(10, -base);
+        };
+
+        function price_float_to_str(price_float, base) {
+            return price_float * Math.pow(10, base);
+        };
+
+        function recalculateSpread() {
+            input_spread.value = parseFloat(input_lowest_sell.value) - parseFloat(input_highest_buy.value);
+        };
+        /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
+        // Bot methods
+        /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
+        var bot_timer_id;
+        var bot_run_lock = false;
+
+        async function runBot() {
+            output_log.value = `${new Date().toLocaleTimeString()}: 🤖 Bot started\n` + output_log.value;
+            btn_get_book.setAttribute("disabled", true);
+            btn_create_orders.setAttribute("disabled", true);
+            btn_cancel_orders.setAttribute("disabled", true);
+            btn_cancel_all_orders.setAttribute("disabled", true);
+            btn_run_bot.setAttribute("disabled", true);
+            btn_kill_bot.removeAttribute("disabled");
+
+            // cancel if running
+            if (bot_timer_id) {
+                clearInterval(bot_timer_id);
+                bot_timer_id = null;
+            }
+
+            // run
+            bot_timer_id = setInterval(async function () {
+                if (bot_run_lock) {
+                    return;
+                }
+                bot_run_lock = true;
+
+                await loadOrderBookData();
+
+                output_log.value = `${new Date().toLocaleTimeString()}: 🤖 Wait 10 seconds\n` + output_log.value;
+                await new Promise(r => setTimeout(r, 10000));
+                output_log.value = `${new Date().toLocaleTimeString()}: 🤖 Cancel orders\n` + output_log.value;
+                await cancelOrders();
+
+                output_log.value = `${new Date().toLocaleTimeString()}: 🤖 Wait 20 seconds\n` + output_log.value;
+                await new Promise(r => setTimeout(r, 20000));
+                output_log.value = `${new Date().toLocaleTimeString()}: 🤖 Create new orders\n` + output_log.value;
+                await createOrders(
+                    parseFloat(input_lowest_sell.value) - parseFloat(price_undercut.value),
+                    parseFloat(input_highest_buy.value) + parseFloat(price_undercut.value)
+                );
+
+                output_log.value = `${new Date().toLocaleTimeString()}: 🤖 Wait 30 seconds\n` + output_log.value;
+                await new Promise(r => setTimeout(r, 30000));
+                output_log.value = `${new Date().toLocaleTimeString()}: 🤖 Cancel all orders\n` + output_log.value;
+                await cancelAllOrders();
+
+                bot_run_lock = false;
+            }, 1 * 1000);
+        }
+
+        function killBot() {
+            output_log.value = `${new Date().toLocaleTimeString()}: 🪦 Killing bot\n` + output_log.value;
+            btn_get_book.removeAttribute("disabled");
+            btn_create_orders.removeAttribute("disabled");
+            btn_cancel_orders.removeAttribute("disabled");
+            btn_cancel_all_orders.removeAttribute("disabled");
+            btn_run_bot.removeAttribute("disabled");
+            btn_kill_bot.setAttribute("disabled", true);
+
+            // cancel if running
+            if (bot_timer_id) {
+                clearInterval(bot_timer_id);
+                bot_timer_id = null;
+            }
+        }
+
+
+        /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
+        // Init
+        /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
+        getPairs();
+    </script>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"
+        integrity="sha384-ka7Sk0Gln4gmtz2MlQnikT1wXgYsOg+OMhuP+IlRH9sENBO0LRn5q+8nbTov4+1p"
+        crossorigin="anonymous"></script>
+</body>
+
+</html>
