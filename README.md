@@ -1,5 +1,5 @@
 # Aval-bot
-Market making bot using Dexalot's smart contracts and REST API endpoints 📈
+Market making bot using [Dexalot](https://dexalot.com/)'s smart contracts and REST API endpoints 📈
 
 You can either manually run commands to read order book, create orders or cancel them.
 Or you can run the bot, which does this automatically, according to steps describeed in docs
@@ -25,11 +25,16 @@ There are no event listeners implemented, no time 😭😭😭
 - 🚫Get gas cost of each order and log it before in order to make buy/sell decisions with t-cost in mind (and console.log it ).
 
 # Run
+```
 http-server
+```
 
 # Quick setup 
+```
 apt install nodejs
 apt install npm
 nvm install v16.14.0
 npm install --save http-server
 npm install --save ethers
+```
+(Some more steps might be required so act according to errors you encounter. Sorry)
