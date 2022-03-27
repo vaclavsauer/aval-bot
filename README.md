@@ -12,6 +12,8 @@ There are no event listeners implemented, no time 😭😭😭
 Project is based on some hello-world examples, so there is a lot of unecessary files.
 All important is in file `bot.html`
 
+Code is a mess of hack'n'slash hacking, so do not look for best practices etc.
+
 # What is done
 - ✅Start with depositing your tokens from the frontend (See bonus items)
 - ✅Get Reference Data from the RESTAPI (contract addresses, pairs, trade increments, min, max trade amount)
