@@ -10,9 +10,9 @@ Bot does only basic stuff, it also undercuts itself. But since he cancels all or
 There are no event listeners implemented, no time 😭😭😭
 
 Project is based on some hello-world examples, so there is a lot of unecessary files.
-All important is in file `bot.html`
+Everzthing important is in file `bot.html`
 
-Code is a mess of hack'n'slash hacking, so do not look for best practices etc.
+*Disclaimer: Code is a mess of hack'n'slash coding, so do not look for best practices, error checking etc.*
 
 # What is done
 - ✅Start with depositing your tokens from the frontend (See bonus items)
