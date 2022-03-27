@@ -9,6 +9,9 @@ Bot does only basic stuff, it also undercuts itself. But since he cancels all or
 
 There are no event listeners implemented, no time 😭😭😭
 
+Project is based on some hello-world examples, so there is a lot of unecessary files.
+All important is in file `bot.html`
+
 # What is done
 - ✅Start with depositing your tokens from the frontend (See bonus items)
 - ✅Get Reference Data from the RESTAPI (contract addresses, pairs, trade increments, min, max trade amount)
@@ -30,6 +33,7 @@ http-server
 ```
 
 # Quick setup 
+No smart deployment here...
 ```
 apt install nodejs
 apt install npm
