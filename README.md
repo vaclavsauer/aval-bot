@@ -1,5 +1,5 @@
 # Aval-bot
-Market making bot using [Dexalot](https://dexalot.com/)'s smart contracts and REST API endpoints 📈
+Market making bot using [Dexalot](https://dexalot.com/)'s smart contracts and REST API endpoints 📈 for Avalanche Summit Hackathon, Barcelona, 2022.
 
 You can either manually run commands to read order book, create orders or cancel them.
 Or you can run the bot, which does this automatically, according to steps describeed in docs
